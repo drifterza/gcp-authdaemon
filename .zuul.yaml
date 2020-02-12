@@ -1,0 +1,53 @@
+# Image building jobs
+- secret:
+    name: gcp-authdaemon-dockerhub
+    data:
+      username: zuulzuul
+      password: !encrypted/pkcs1-oaep
+        - HRBNCurib3EWbZJ7ZT7qHXZJVWBz83OWdebBDGTJKShdh9BO3yfBYws48YYDx3D3+U/ZA
+          JvagyvXu4faFEQrAyKg+MwYrGKfak7u+daOeNYsPtETpYfvPGb1h09cXUX8eMVqtzNket
+          BMXg/KcoGJwGwpvkYlMG/DhnqoTZ48LQs3V8B499uSWYizJHTnetgoGk15trE1Z90xaoZ
+          r/cj/KbRs4NGiFLkdLX7L0RXgZG68HHfCpdTgCyUtoqjaC3nWIAqX9wqCwBq++T9ye8Dl
+          XAhIbyouYLDuZFwywupiv4dJhpea8F0PRVYv/uDf63x1lj8+Ga/SN+fK1NZrf/s44oH3W
+          R0oD95B/hq+QiRSRzzL/3SxnsHzLAoal21UHwa+BQrGCyr0ggKkVLx+y0SMHOZeLV7vb8
+          XmCwaP7/LvJKIH/hggLsaleYlUlgJ6uyXmgbQl0yLPI3w8q8aRGLkXfAqBNFKqwprUU7l
+          +nyExeVe1XfkyloOkk7GL6tdG6g9Sj3A1hYxshACF9+irra5cgYzNi4U3shTBvmdf3tK9
+          5Bh4ePAgwh4S+lgXcmtd7Li9nBhkobNPC1VbDZigV14c04Juep10Y3O2wbFgOY/znG6d8
+          c8y81M5qEpjJn7pmJ0WsGH+g8oH+jdVKTNS70ZRsaQQijaDigNMb56CbQIc+xc=
+
+- job:
+    name: gcp-authdaemon-build-image
+    parent: opendev-build-docker-image
+    vars: &gcp_authdaemon_image_vars
+      docker_images:
+        - context: .
+          repository: zuul/gcp-authdaemon
+
+- job:
+    name: gcp-authdaemon-upload-image
+    parent: opendev-upload-docker-image
+    vars: *gcp_authdaemon_image_vars
+    secrets:
+      name: docker_credentials
+      secret: gcp-authdaemon-dockerhub
+      pass-to-parent: true
+
+- job:
+    name: gcp-authdaemon-promote-image
+    parent: opendev-promote-docker-image
+    vars: *gcp_authdaemon_image_vars
+    secrets:
+      name: docker_credentials
+      secret: gcp-authdaemon-dockerhub
+      pass-to-parent: true
+
+- project:
+    check:
+      jobs:
+        - gcp-authdaemon-build-image
+    gate:
+      jobs:
+        - gcp-authdaemon-upload-image
+    promote:
+      jobs:
+        - gcp-authdaemon-promote-image

@@ -1,0 +1,18 @@
+An authorization daemon for Google Cloud.
+
+This repo builds a container image which runs a special-purpose
+authorization daemon.  It is intended to be run in Google Cloud
+(particularly in Google Kubernetes Engine).  The daemon periodically
+fetches a bearer token from the Google Cloud metadata service and
+writes it to a location on disk.
+
+Running Zuul in GKE with access to service account credentials can be
+complicated because the executor does not limit access to the URLs
+from which they are fetched.  This means that, without a solution such
+as this, even untrusted jobs may be able to access these credentials.
+
+However, with this daemon, Zuul may be configured to run in GKE with
+Workload Identity enabled so that the executor does not have access to
+service account credentials.  This daemon may be run with access to
+credentials and will fetch them write them to a shared volume that may
+then be exposed by the executor to trusted (but not untrusted) jobs.
